@@ -67,6 +67,27 @@ resource "aws_internet_gateway" "soar_igw" {
   }
 }
 
+resource "aws_route_table" "soar_rt" {
+	vpc_id                  = aws_vpc.soar_vpc.id
+	route {
+  		cidr_block 	= "0.0.0.0/0"
+		gateway_id 	= aws_internet_gateway.soar_igw.id 
+	}
+	tags = {
+  		Name = "soar_rt"
+ 	}
+}
+
+resource "aws_route_table_association" "soar_rt_pub_asoc" {
+	subnet_id 		= aws_subnet.soar_sn_pub.id 
+	route_table_id 		= aws_route_table.soar_rt.id
+}
+
+resource "aws_route_table_association" "soar_rt_pri_asoc" {
+	subnet_id 		= aws_subnet.soar_sn_pri.id
+        route_table_id 		= aws_route_table.soar_rt.id
+}
+
 resource "aws_instance" "soar_ec2" {
 	ami 		= "ami-03f65b8614a860c29"
 	instance_type 	= "t2.small"
