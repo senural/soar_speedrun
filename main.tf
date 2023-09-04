@@ -11,6 +11,27 @@ resource "aws_vpc" "soar_vpc" {
   	}
 }
 
+resource "tls_private_key" "soar_pri_key" {
+	algorithm 	= "RSA"
+}
+
+resource "aws_key_pair" "soar_key_pair" {
+	key_name 	= "soar_key_pair"
+ 	public_key 	= tls_private_key.soar_pri_key.public_key_openssh
+ 	depends_on = [
+  		tls_private_key.soar_pri_key
+ 	]
+}
+
+resource "local_file" "soar_key_pem" {
+	content 	= tls_private_key.soar_pri_key.private_key_pem
+ 	filename 	= "soar_key_pem.pem"
+ 	file_permission	="0400"
+ 	depends_on = [
+  		tls_private_key.soar_pri_key
+ 	]
+}
+
 resource "aws_security_group" "soar_sg" {
  	name 		= "soar_allow"
  	vpc_id 		= aws_vpc.soar_vpc.id
@@ -89,6 +110,12 @@ resource "aws_route_table_association" "soar_rt_pri_asoc" {
 }
 
 resource "aws_instance" "soar_ec2" {
-	ami 		= "ami-03f65b8614a860c29"
-	instance_type 	= "t2.small"
+	ami 			= "ami-014b69f69e708f2a9"
+	instance_type 		= "m5.xlarge"
+	key_name 		= aws_key_pair.soar_key_pair.key_name
+	vpc_security_group_ids	= [ aws_security_group.soar_sg.id ]
+	subnet_id		= aws_subnet.soar_sn_pub.id
+	tags = {
+		Name = "soar_ec2"
+	}
 }
